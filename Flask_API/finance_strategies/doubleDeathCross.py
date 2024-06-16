@@ -1,8 +1,5 @@
 import pandas as pd
 import yfinance as yf
-import plotly.graph_objects as go
-import plotly.io as pio
-import mpld3
 
 def get_stock_data(ticker: str, days: int) -> pd.DataFrame:
     # Calculate the start date based on the number of days
@@ -14,9 +11,7 @@ def get_stock_data(ticker: str, days: int) -> pd.DataFrame:
     
     return stock_data
 
-
 def get_doubleDeathCross(ticker, days):
-
     stock_data = get_stock_data(ticker, days)
 
     # Calculate SMAs
@@ -34,43 +29,14 @@ def get_doubleDeathCross(ticker, days):
 
     stock_data.dropna(inplace=True)
 
-    # Create the plotly figure
-    fig = go.Figure()
+    # Prepare the data for JSON output
+    output = {
+        'dates': stock_data.index.strftime('%Y-%m-%d').tolist(),
+        'close': stock_data['Close'].tolist(),
+        'SMA_50': stock_data['SMA_50'].tolist(),
+        'SMA_200': stock_data['SMA_200'].tolist(),
+        'buy_signals': stock_data[stock_data['Signal'] == 1].index.strftime('%Y-%m-%d').tolist(),
+        'sell_signals': stock_data[stock_data['Signal'] == -1].index.strftime('%Y-%m-%d').tolist(),
+    }
 
-    # Add the close price trace
-    fig.add_trace(go.Scatter(x=stock_data.index, y=stock_data['Close'], mode='lines', name='Close', line=dict(color='blue')))
-
-    # Add the SMA_50 trace
-    fig.add_trace(go.Scatter(x=stock_data.index, y=stock_data['SMA_50'], mode='lines', name='SMA_50', line=dict(color='orange', dash='dash')))
-
-    # Add the SMA_200 trace
-    fig.add_trace(go.Scatter(x=stock_data.index, y=stock_data['SMA_200'], mode='lines', name='SMA_200', line=dict(color='purple', dash='dash')))
-
-    # Add buy signals
-    fig.add_trace(go.Scatter(x=stock_data[stock_data['Signal'] == 1].index,
-                            y=stock_data['Close'][stock_data['Signal'] == 1],
-                            mode='markers',
-                            name='Buy',
-                            marker=dict(symbol='triangle-up', color='green', size=20)))
-
-    # Add sell signals
-    fig.add_trace(go.Scatter(x=stock_data[stock_data['Signal'] == -1].index,
-                            y=stock_data['Close'][stock_data['Signal'] == -1],
-                            mode='markers',
-                            name='Sell',
-                            marker=dict(symbol='triangle-down', color='red', size=20)))
-
-    # Update layout
-    fig.update_layout(
-        title=f'DoubleDeathCross Graph for {ticker}',
-        xaxis_title='Date',
-        yaxis_title='Price',
-        legend=dict(x=0, y=1, traceorder='normal'),
-        template='plotly_white',
-        height=800,
-        width=1200
-    )
-
-    # Show the plot
-    html_str = pio.to_html(fig, full_html=False)
-    return html_str
+    return output

@@ -1,10 +1,12 @@
 from flask import Flask, jsonify, request
 from finance_strategies.bollingBandsRSI import bollingBandsRSI
+from finance_strategies.bollingBandsRSI_html import bollingBandsRSI_test
 from finance_strategies.candleStickChart import get_candlestickchart
 from finance_strategies.sharpeRatioCalc import get_sharpeRatioCalc
 from finance_strategies.stochasticRSI import get_StochRSI
 from finance_strategies.doubleDeathCross import get_doubleDeathCross
 from markupsafe import escape
+import json
 import yfinance as yf
 from datetime import datetime, timedelta
 
@@ -21,7 +23,28 @@ def format_timestamps(data):
 @app.route('/test')
 
 def hello_world():
-    return 'Hello, World!'
+    return "<h1>API twfsdfhgsd Display</h1>"
+##--------------------------------Actual Graph Endpoint for React-------------------
+@app.route('/get_bollingBandsRSI/<ticker>/<int:days>', methods=['GET'])
+def plot_bollinger_endpoint(ticker, days):
+    plot_bollinger = bollingBandsRSI(ticker, days)
+    return jsonify(json.loads(plot_bollinger))
+
+@app.route('/get_sharpeRatio/<ticker>/<int:days>', methods=['GET'])
+def get_sharpeRatio(ticker, days):
+    plot_sharpeRatio = get_sharpeRatioCalc(ticker, days)
+    return plot_sharpeRatio
+
+@app.route('/get_doubleDeathCross/<ticker>/<int:days>', methods=['GET'])
+def get_doubleDeathCrossgraph(ticker, days):
+    doubleDeathCrossgraph = get_doubleDeathCross(ticker, days)
+    return jsonify(doubleDeathCrossgraph)
+
+
+
+
+
+
  
 # Endpoint to get company info
 @app.route('/company_info/<ticker>', methods=['GET'])
@@ -90,9 +113,9 @@ def historical_prices(ticker, days):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     
-@app.route('/g/plot_bollingBandsRSI/<ticker>/<int:days>', methods=['GET'])
-def plot_bollinger_endpoint(ticker, days):
-    plot_bollinger = bollingBandsRSI(ticker, days)
+@app.route('/grag/plot_bollingBandsRSI/<ticker>/<int:days>', methods=['GET'])
+def graph_plot_bollinger_endpoint(ticker, days):
+    plot_bollinger = bollingBandsRSI_test(ticker, days)
     return plot_bollinger
 
 @app.route('/g/plot_candlestickchart/<ticker>/<int:days>', methods=['GET'])
@@ -100,24 +123,17 @@ def plot_candlestick_endpoint(ticker, days):
     plot_candle = get_candlestickchart(ticker, days)
     return plot_candle
 
-@app.route('/g/get_sharpeRatio/<ticker>/<int:days>', methods=['GET'])
-def get_sharpeRatio(ticker, days):
-    plot_sharpeRatio = get_sharpeRatioCalc(ticker, days)
-    return plot_sharpeRatio
+
 
 @app.route('/g/get_stochRSI/<ticker>/<int:days>', methods=['GET'])
 def get_stochRSIRatio(ticker, days):
     plot_stochRSIRatio = get_StochRSI(ticker, days)
     return plot_stochRSIRatio
 
-
-
-@app.route('/g/get_doubleDeathCross/<ticker>/<int:days>', methods=['GET'])
-def get_doubleDeathCrossgraph(ticker, days):
-    doubleDeathCrossgraph = get_doubleDeathCross(ticker, days)
-    return doubleDeathCrossgraph
+# @app.route('/g/get_doubleDeathCross/<ticker>/<int:days>', methods=['GET'])
+# def get_doubleDeathCrossgraph(ticker, days):
+#     doubleDeathCrossgraph = get_doubleDeathCross(ticker, days)
+#     return doubleDeathCrossgraph
         
-
-
 if __name__ == "__main__":
-        app.run(host="0.0.0.0", port=int("3000"), debug=True)
+        app.run(host="0.0.0.0", port=int("5000"), debug=True)
