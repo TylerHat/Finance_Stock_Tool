@@ -3,6 +3,10 @@ import numpy as np
 import yfinance as yf
 import plotly.graph_objs as go
 import plotly.io as pio
+import webview
+
+def testing():
+    print("helloWorld")
 
 # Define a function to create and get the Bollinger Bands
 def bollinger_bands(data, window_size=30):
@@ -50,7 +54,6 @@ def get_stock_data(ticker: str, days: int) -> pd.DataFrame:
     end_date = pd.to_datetime('today')
     start_date = end_date - pd.Timedelta(days=days)
     stock_data = yf.download(ticker, start=start_date, end=end_date)
-    stock_data.reset_index(inplace=True)  # Reset index to make Date a column
     return stock_data
 
 def bollingBandsRSI_test(ticker, days):
@@ -74,11 +77,14 @@ def bollingBandsRSI_test(ticker, days):
         yaxis_title='Price in USD',
         template='plotly_white'
     )
-    # Convert the DataFrame to JSON
-   # json_data = data.to_json(orient='records', date_format='iso')
-    html_str = pio.to_html(fig, full_html=False)
 
+    # Convert the plot to HTML string
+    html_str = pio.to_html(fig, full_html=False)
     return html_str
 
-test = bollingBandsRSI_test("META", 50)
+# Test the function
+html_output = bollingBandsRSI_test("META", 200)
 
+# Create a simple pywebview application
+window = webview.create_window('Bollinger Bands & RSI Trading Strategy', html=html_output)
+webview.start()

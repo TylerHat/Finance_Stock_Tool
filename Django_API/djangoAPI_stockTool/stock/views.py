@@ -1,18 +1,16 @@
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 import pandas as pd
 import numpy as np
 import yfinance as yf
-import plotly.graph_objs as go
-import plotly.io as pio
 
-# Define a function to create and get the Bollinger Bands
 def bollinger_bands(data, window_size=30):
-    rolling_mean = data['Close'].rolling(window=window_size).mean()  # Simple Moving Average (SMA)
+    rolling_mean = data['Close'].rolling(window=window_size).mean()
     rolling_std = data['Close'].rolling(window=window_size).std()
     data['UpperBand'] = rolling_mean + (2 * rolling_std)
     data['LowerBand'] = rolling_mean - (2 * rolling_std)
     return data
 
-# Define a function to create and get the Relative Strength Index (RSI)
 def rsi(data, window=14):
     delta = data['Close'].diff()
     gain = delta.where(delta > 0, 0)
@@ -26,9 +24,8 @@ def rsi(data, window=14):
     data['Oversold'] = 30
     return data
 
-# Create and get the trading strategy
 def strategy(data):
-    position = 0  # shares
+    position = 0
     buy_price = []
     sell_price = []
     for i in range(len(data)):
@@ -45,15 +42,18 @@ def strategy(data):
             sell_price.append(np.nan)
     return buy_price, sell_price
 
-# Get stock data
 def get_stock_data(ticker: str, days: int) -> pd.DataFrame:
     end_date = pd.to_datetime('today')
     start_date = end_date - pd.Timedelta(days=days)
     stock_data = yf.download(ticker, start=start_date, end=end_date)
-    stock_data.reset_index(inplace=True)  # Reset index to make Date a column
+    stock_data.reset_index(inplace=True)
     return stock_data
 
-def bollingBandsRSI_test(ticker, days):
+@csrf_exempt
+def bollinger_rsi_view(request):
+    ticker = request.GET.get('ticker', 'META')
+    days = int(request.GET.get('days', 50))
+
     data = get_stock_data(ticker, days)
     data = bollinger_bands(data)
     data = rsi(data)
@@ -61,24 +61,14 @@ def bollingBandsRSI_test(ticker, days):
     data['Buy'] = buy_price
     data['Sell'] = sell_price
 
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(x=data.index, y=data['Close'], mode='lines', name='Closing Price', line=dict(color='blue', width=2)))
-    fig.add_trace(go.Scatter(x=data.index, y=data['UpperBand'], mode='lines', name='Upper Band', line=dict(color='yellow', width=1)))
-    fig.add_trace(go.Scatter(x=data.index, y=data['LowerBand'], mode='lines', name='Lower Band', line=dict(color='purple', width=1)))
-    fig.add_trace(go.Scatter(x=data.index, y=data['Buy'], mode='markers', name='Buy', marker=dict(color='green', symbol='triangle-up', size=10)))
-    fig.add_trace(go.Scatter(x=data.index, y=data['Sell'], mode='markers', name='Sell', marker=dict(color='red', symbol='triangle-down', size=10)))
+    json_data = {
+        'Date': data['Date'].dt.strftime('%Y-%m-%d').tolist(),
+        'Close': data['Close'].tolist(),
+        'UpperBand': data['UpperBand'].tolist(),
+        'LowerBand': data['LowerBand'].tolist(),
+        'RSI': data['RSI'].tolist(),
+        'Buy': data['Buy'].tolist(),
+        'Sell': data['Sell'].tolist(),
+    }
 
-    fig.update_layout(
-        title=f'Bollinger Bands & RSI Trading Strategy for {ticker}',
-        xaxis_title='Dates',
-        yaxis_title='Price in USD',
-        template='plotly_white'
-    )
-    # Convert the DataFrame to JSON
-   # json_data = data.to_json(orient='records', date_format='iso')
-    html_str = pio.to_html(fig, full_html=False)
-
-    return html_str
-
-test = bollingBandsRSI_test("META", 50)
-
+    return JsonResponse(json_data)

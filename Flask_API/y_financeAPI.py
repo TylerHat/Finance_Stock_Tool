@@ -28,7 +28,7 @@ def hello_world():
 @app.route('/get_bollingBandsRSI/<ticker>/<int:days>', methods=['GET'])
 def plot_bollinger_endpoint(ticker, days):
     plot_bollinger = bollingBandsRSI(ticker, days)
-    return jsonify(json.loads(plot_bollinger))
+    return plot_bollinger
 
 @app.route('/get_sharpeRatio/<ticker>/<int:days>', methods=['GET'])
 def get_sharpeRatio(ticker, days):

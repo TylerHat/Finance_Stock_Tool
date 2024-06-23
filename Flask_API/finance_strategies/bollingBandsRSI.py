@@ -76,7 +76,7 @@ def get_stock_data(ticker, days):
     stock_data = yf.download(ticker, start=start_date, end=end_date)
     return stock_data
 
-def bollingBandsRSI(ticker, days):
+def bollingBandsRSI_depricated(ticker, days):
     """
     Fetch stock data, calculate Bollinger Bands and RSI, and return the trading strategy data points as JSON.
     
@@ -102,3 +102,33 @@ def bollingBandsRSI(ticker, days):
 
     return json.dumps(result)
 
+def bollingBandsRSI(ticker, days):
+    # Get the stock data for the given ticker and number of days
+    data = get_stock_data(ticker, days)
+    
+    # Calculate Bollinger Bands
+    data = bollinger_bands(data)
+    
+    # Calculate RSI
+    data = rsi(data)
+    
+    # Apply the trading strategy to get buy and sell signals
+    buy_price, sell_price = strategy(data)
+    data['Buy'] = buy_price
+    data['Sell'] = sell_price
+
+    # Prepare the result in the desired format
+    result = {}
+    for date in data.index:
+        result[date.strftime('%Y-%m-%d')] = {
+            'close': data.loc[date, 'Close'],
+            'upper_band': data.loc[date, 'UpperBand'],
+            'lower_band': data.loc[date, 'LowerBand'],
+            'buy_signal': data.loc[date, 'Buy'],
+            'sell_signal': data.loc[date, 'Sell']
+        }
+
+    # Convert the result dictionary to a JSON string with indentation for readability
+    result_json = json.dumps(result, indent=4)
+
+    return result_json
